@@ -33,7 +33,7 @@
 
 #include <errno.h>
 #include <math.h>
-#include <cutils/log.h>
+#include <log/log.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include "audio_hw.h"
@@ -44,6 +44,7 @@
 #include <dlfcn.h>
 #include <math.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <cutils/properties.h>
 #include "audio_extn.h"
 #include <linux/msm_audio_calibration.h>
@@ -1346,20 +1347,28 @@ void audio_extn_spkr_prot_set_parameters(struct str_parms *parms,
 {
     int err;
 
-    err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_SPKR_TZ_1,
-                            value, len);
-    if (err >= 0) {
-        tz_names.spkr_1_name = strdup(value);
-        str_parms_del(parms, AUDIO_PARAMETER_KEY_SPKR_TZ_1);
-    }
+    if (property_get_bool("vendor.audio.read.wsatz.type", false)) {
+        if ((!tz_names.spkr_2_name) && (strstr(value, "wsa"))) {
+            tz_names.spkr_2_name = strdup(value);
+        } else if ((!tz_names.spkr_1_name) && (strstr(value, "wsa"))) {
+                   tz_names.spkr_1_name = strdup(value);
+        }
+    } else {
 
-    err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_SPKR_TZ_2,
+        err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_SPKR_TZ_1,
                             value, len);
-    if (err >= 0) {
-        tz_names.spkr_2_name = strdup(value);
-        str_parms_del(parms, AUDIO_PARAMETER_KEY_SPKR_TZ_2);
-    }
+        if (err >= 0) {
+            tz_names.spkr_1_name = strdup(value);
+            str_parms_del(parms, AUDIO_PARAMETER_KEY_SPKR_TZ_1);
+        }
 
+        err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_SPKR_TZ_2,
+                            value, len);
+        if (err >= 0) {
+            tz_names.spkr_2_name = strdup(value);
+            str_parms_del(parms, AUDIO_PARAMETER_KEY_SPKR_TZ_2);
+        }
+    }
     ALOGV("%s: tz1: %s, tz2: %s", __func__,
           tz_names.spkr_1_name, tz_names.spkr_2_name);
 }

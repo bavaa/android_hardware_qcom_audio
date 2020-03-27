@@ -219,6 +219,11 @@ ifneq ($(strip $(DOLBY_DDP)),true)
 endif
 endif
 
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_FLAC_OFFLOAD)),true)
+    LOCAL_CFLAGS += -DFLAC_OFFLOAD_ENABLED
+    LOCAL_CFLAGS += -DCOMPRESS_METADATA_NEEDED
+endif
+
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_EXTN_FLAC_DECODER)),true)
     LOCAL_CFLAGS += -DFLAC_OFFLOAD_ENABLED
     LOCAL_CFLAGS += -DCOMPRESS_METADATA_NEEDED
@@ -326,6 +331,7 @@ LOCAL_SHARED_LIBRARIES := \
         liblog \
         libcutils \
         libtinyalsa \
+        libhardware \
         libtinycompress \
         libaudioroute \
         libdl \
@@ -342,11 +348,17 @@ LOCAL_HEADER_LIBRARIES += audio_qaf_headers
 LOCAL_SHARED_LIBRARIES += libqap_wrapper liblog
 endif
 
+ifneq ($(strip $(AUDIO_FEATURE_ENABLED_EXT_AMPLIFIER)),false)
+    LOCAL_CFLAGS += -DEXT_AMPLIFIER_ENABLED
+    LOCAL_SRC_FILES += audio_extn/audio_amplifier.c
+endif
+
 LOCAL_C_INCLUDES += \
 	external/tinyalsa/include \
 	external/tinycompress/include \
 	system/media/audio_utils/include \
 	external/expat/lib \
+	hardware/libhardware/include \
 	$(call include-path-for, audio-route) \
 	$(call include-path-for, audio-effects) \
 	$(LOCAL_PATH)/$(AUDIO_PLATFORM) \
